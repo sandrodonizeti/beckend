@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model conversa {
+  id               Int                @id @default(autoincrement())
+  nome             String?            @db.VarChar(50)
+  tipo             conversa_tipo?
+  inicio           DateTime           @default(now()) @db.Timestamp(0)
+  conversa_usuario conversa_usuario[]
+  mensagem         mensagem[]
+}
+
+model conversa_usuario {
+  conversa_id Int
+  usuario_id  Int
+  conversa    conversa @relation(fields: [conversa_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_conversa_has_usuario_conversa")
+  usuario     usuario  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_conversa_has_usuario_usuario1")
+
+  @@id([conversa_id, usuario_id])
+  @@index([conversa_id], map: "fk_conversa_has_usuario_conversa_idx")
+  @@index([usuario_id], map: "fk_conversa_has_usuario_usuario1_idx")
+}
+
+model mensagem {
+  id          Int       @id @default(autoincrement())
+  usuario_id  Int?
+  conversa_id Int?
+  conteudo    String?   @db.Text
+  nome        String?   @db.VarChar(50)
+  caminho     String?   @db.VarChar(255)
+  envio       DateTime  @default(now()) @db.Timestamp(0)
+  conversa    conversa? @relation(fields: [conversa_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mensagem_conversa1")
+  usuario     usuario?  @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mensagem_usuario1")
+
+  @@index([conversa_id], map: "fk_mensagem_conversa1_idx")
+  @@index([usuario_id], map: "fk_mensagem_usuario1_idx")
+}
+
+model usuario {
+  id               Int                @id @default(autoincrement())
+  nome             String?            @db.VarChar(50)
+  usuario          String?            @db.VarChar(100)
+  foto             String?            @db.VarChar(255)
+  nascimento       DateTime?          @db.Date
+  senha            String?            @db.VarChar(255)
+  sexo             usuario_sexo?
+  status           usuario_status?
+  cadastro         DateTime           @default(now()) @db.Timestamp(0)
+  conversa_usuario conversa_usuario[]
+  mensagem         mensagem[]
+}
+
+enum conversa_tipo {
+  Particular
+  Grupo
+}
+
+enum usuario_sexo {
+  Masculino
+  Feminino
+  Outro
+  Prefiro_n_o_responder @map("Prefiro não responder")
+}
+
+enum usuario_status {
+  Dispon_vel  @map("Disponível")
+  Ocupado
+  No_trabalho @map("No trabalho")
+  Na_escola   @map("Na escola")
+}
